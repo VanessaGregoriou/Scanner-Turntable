@@ -2,49 +2,55 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".SessionCreateDialogFragment">
-<!--    <data>-->
-<!--        <variable name="sessionItem" type="com.android.app.itemscanner.api."/>-->
-<!--    </data>-->
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:paddingLeft="20dp"
-        android:paddingRight="20dp">
+        android:paddingRight="20dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Name of session" />
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:text="@string/session_title" />
 
         <EditText
             android:id="@+id/session_name_edit"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Name of session" />
+            android:inputType="text"
+            android:hint="@string/title_hint" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Number of photos to take" />
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:text="@string/num_photos" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:gravity="center">
 
             <com.google.android.material.slider.Slider
+                android:id="@+id/num_photos_slider"
                 android:layout_weight="1"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:value="180"
+                android:stepSize="1"
                 android:valueFrom="10"
                 android:valueTo="300" />
-            <TextView
+            <EditText
+                android:id="@+id/edit_num_photos"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="180" />
+                android:inputType="number" />
+
         </LinearLayout>
 
     </LinearLayout>
