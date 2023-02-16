@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".SessionCreateDialogFragment">
+<!--    <data>-->
+<!--        <variable name="sessionItem" type="com.android.app.itemscanner.api."/>-->
+<!--    </data>-->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Name of session" />
+
+        <EditText
+            android:id="@+id/session_name_edit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Name of session" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Number of photos to take" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <com.google.android.material.slider.Slider
+                android:layout_weight="1"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:value="180"
+                android:valueFrom="10"
+                android:valueTo="300" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="180" />
+        </LinearLayout>
+
+    </LinearLayout>
+</layout>
