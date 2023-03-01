@@ -11,6 +11,7 @@
     <string name="title_hint">figurine</string>
     <string name="num_photos">Number of photos to take</string>
 
+    <string name="take_photo">Take Photo</string>
     <string name="second_fragment_label">Second Fragment</string>
 
     <string name="add_first_session">Tap below to add first session</string>

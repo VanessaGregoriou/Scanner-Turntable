@@ -54,8 +54,8 @@ class SessionCreateDialogFragment(listener: DialogListener) : DialogFragment() {
             val builder = AlertDialog.Builder(it)
             builder
                 .setView(dialogView)
-                .setPositiveButton(R.string.start_scanning) { dialog, _ ->
-
+                .setPositiveButton(R.string.start_scanning) { _, _ ->
+                    listener.onStart(this)
                 }
                 .setNegativeButton(R.string.close) { _, _ ->
                     listener.onClose(this)
