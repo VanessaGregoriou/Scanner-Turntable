@@ -1,6 +1,5 @@
 package com.android.app.itemscanner
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
@@ -57,8 +56,7 @@ class MainActivity : AppCompatActivity(), SessionCreateDialogFragment.DialogList
     }
 
     override fun onStart(dialog: DialogFragment) {
-        val intent = Intent(this, SessionActivity::class.java)
-        startActivity(intent)
+
     }
 
     override fun onClose(dialog: DialogFragment) {}
