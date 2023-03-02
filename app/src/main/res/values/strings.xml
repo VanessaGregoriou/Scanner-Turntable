@@ -1,8 +1,10 @@
 <resources>
     <string name="app_name">Item Scanner</string>
     <string name="action_settings">Settings</string>
+
     <!-- Strings used for fragments for navigation -->
     <string name="scanned_list_fragment_label">Scan sessions</string>
+    <string name="add_first_session">Tap below to add first session</string>
 
     <!-- Create session dialog -->
     <string name="start_scanning">Start scanning</string>
@@ -11,7 +13,7 @@
     <string name="title_hint">figurine</string>
     <string name="num_photos">Number of photos to take</string>
 
-    <string name="second_fragment_label">Second Fragment</string>
+    <string name="session_record_fragment_label">Session Record Fragment</string>
+    <string name="images_progress_text">%1$d/%2$d photos taken</string>
 
-    <string name="add_first_session">Tap below to add first session</string>
 </resources>

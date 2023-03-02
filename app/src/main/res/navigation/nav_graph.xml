@@ -12,17 +12,23 @@
         tools:layout="@layout/scanned_list_fragment">
 
         <action
-            android:id="@+id/action_FirstFragment_to_SecondFragment"
-            app:destination="@id/SecondFragment" />
+            android:id="@+id/action_ScannedListFragment_to_SessionRecordFragment"
+            app:destination="@id/SessionRecordFragment" />
     </fragment>
     <fragment
-        android:id="@+id/SecondFragment"
-        android:name="com.android.app.itemscanner.SecondFragment"
-        android:label="@string/second_fragment_label"
-        tools:layout="@layout/fragment_second">
+        android:id="@+id/SessionRecordFragment"
+        android:name="com.android.app.itemscanner.SessionRecordFragment"
+        android:label="@string/session_record_fragment_label"
+        tools:layout="@layout/fragment_session_record">
 
         <action
-            android:id="@+id/action_SecondFragment_to_FirstFragment"
+            android:id="@+id/action_SessionRecordFragment_to_ScannedListFragment"
             app:destination="@id/ScannedListFragment" />
+        <argument
+            android:name="sessionName"
+            app:argType="string" />
+        <argument
+            android:name="numPhotos"
+            app:argType="integer" />
     </fragment>
 </navigation>

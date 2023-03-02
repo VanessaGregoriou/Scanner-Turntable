@@ -5,9 +5,9 @@ import android.app.Dialog
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.view.LayoutInflater
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
+import com.android.app.itemscanner.api.ScanSession
 import com.android.app.itemscanner.databinding.CreateSessionDialogBinding
 
 class SessionCreateDialogFragment(listener: DialogListener) : DialogFragment() {
@@ -22,8 +22,8 @@ class SessionCreateDialogFragment(listener: DialogListener) : DialogFragment() {
      * implement this interface in order to receive event callbacks.
      * Each method passes the DialogFragment in case the host needs to query it. */
     interface DialogListener {
-        fun onStart(dialog: DialogFragment)
-        fun onClose(dialog: DialogFragment)
+        fun onStartButtonPress(sessionName: String, numPhotos: Int)
+        fun onCloseButtonPress()
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -54,11 +54,12 @@ class SessionCreateDialogFragment(listener: DialogListener) : DialogFragment() {
             val builder = AlertDialog.Builder(it)
             builder
                 .setView(dialogView)
-                .setPositiveButton(R.string.start_scanning) { dialog, _ ->
-
+                .setPositiveButton(R.string.start_scanning) { _, _ ->
+                    listener.onStartButtonPress(
+                        binding.sessionNameEdit.text.toString(), binding.numPhotosSlider.value.toInt())
                 }
                 .setNegativeButton(R.string.close) { _, _ ->
-                    listener.onClose(this)
+                    listener.onCloseButtonPress()
                 }
             // Create the AlertDialog object and return it
             builder.create()
