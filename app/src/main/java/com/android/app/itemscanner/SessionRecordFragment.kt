@@ -1,13 +1,12 @@
 package com.android.app.itemscanner
 
-import android.Manifest
 import android.content.ContentValues
-import android.content.pm.PackageManager
+import android.content.Context
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,16 +16,22 @@ import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import androidx.navigation.navArgument
 import com.android.app.itemscanner.databinding.FragmentSessionRecordBinding
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.zip.Adler32
+import java.util.zip.CheckedOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
 import kotlin.properties.Delegates
 
 /**
@@ -36,6 +41,7 @@ class SessionRecordFragment : Fragment() {
     companion object {
         private const val TAG = "CameraXApp"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+        private const val DIRECTORY_PATH = "/storage/emulated/0/Pictures"
     }
 
     private var _binding: FragmentSessionRecordBinding? = null
@@ -75,18 +81,35 @@ class SessionRecordFragment : Fragment() {
         cameraExecutor.shutdown()
     }
 
+    private fun titleOutputFile(context: Context, title: String) =
+        "${context.filesDir}/${title}.zip"
+
     private fun startRecording() {
-        takePhoto(0)
+        val context = context ?: return
+
+        val fileOutputStream = FileOutputStream(titleOutputFile(context, sessionTitle))
+        val checksum = CheckedOutputStream(fileOutputStream, Adler32())
+        val zipOutputStream = ZipOutputStream(checksum)
+
+        takePhoto(0, zipOutputStream) {
+            zipOutputStream.finish()
+            zipOutputStream.close()
+            checksum.close()
+            fileOutputStream.close()
+        }
     }
 
-    private fun takePhoto(index: Int) {
+    private fun takePhoto(
+        index: Int,
+        zipOutputStream: ZipOutputStream,
+        closeOutputStreams: Runnable
+    ) {
         val context = context ?: return
         // Get a stable reference of the modifiable image capture use case
         val imageCapture = imageCapture ?: return
 
         // Create time stamped name and MediaStore entry.
-        val name = SimpleDateFormat(SessionRecordFragment.FILENAME_FORMAT, Locale.US)
-            .format(System.currentTimeMillis())
+        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
@@ -97,12 +120,15 @@ class SessionRecordFragment : Fragment() {
 
         // Create output options object which contains file + metadata
         val outputOptions = ImageCapture.OutputFileOptions
-            .Builder(context.contentResolver,
+            .Builder(
+                context.contentResolver,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-                contentValues)
+                contentValues
+            )
             .build()
 
         // Set up image capture listener, which is triggered after photo has been taken
+        // /storage/emulated/0/Pictures/scan_****/****.jpg
         imageCapture.takePicture(
             outputOptions,
             ContextCompat.getMainExecutor(context),
@@ -115,14 +141,22 @@ class SessionRecordFragment : Fragment() {
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     val msg = "Photo capture succeeded: ${
-                        getString(R.string.images_progress_text, index + 1, numPhotos)}"
-                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                        getString(R.string.images_progress_text, index + 1, numPhotos)
+                    }"
                     Log.d(TAG, msg)
-                    if (index+1 < numPhotos) {
+
+                    zipPhoto("${sessionTitle}/${name}.jpg", zipOutputStream)
+                    if (index + 1 < numPhotos) {
                         triggerTurntable()
-                        takePhoto(index + 1)
+                        takePhoto(index + 1, zipOutputStream, closeOutputStreams)
                     } else {
-                        zipPhotos()
+                        Toast.makeText(context, "Scanning complete.", Toast.LENGTH_SHORT).show()
+                        Log.i(TAG, "Scanning complete: ${titleOutputFile(context, sessionTitle)}")
+                        closeOutputStreams.run()
+                        findNavController().navigate(
+                            SessionRecordFragmentDirections
+                                .actionSessionRecordFragmentToScannedListFragment()
+                        )
                     }
                 }
             }
@@ -133,8 +167,18 @@ class SessionRecordFragment : Fragment() {
         // TODO: set up serial connection with arduino
     }
 
-    private fun zipPhotos() {
-        // TODO: set up photos compression
+    private fun zipPhoto(imageFilePath: String, zipOutputStream: ZipOutputStream) {
+        val imageFile = File("${DIRECTORY_PATH}/${imageFilePath}")
+        val fin = FileInputStream(imageFile)
+        val zipEntry = ZipEntry(imageFilePath)
+        zipOutputStream.putNextEntry(zipEntry)
+        var length: Int
+        val buffer = ByteArray(1024)
+        while (fin.read(buffer).also { length = it } > 0) {
+            zipOutputStream.write(buffer, 0, length)
+        }
+        fin.close()
+        zipOutputStream.closeEntry()
     }
 
     private fun startCamera() {
