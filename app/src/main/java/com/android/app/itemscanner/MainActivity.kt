@@ -26,7 +26,7 @@ import com.android.app.itemscanner.api.ScanSession
 import com.android.app.itemscanner.databinding.ActivityMainBinding
 import com.android.app.itemscanner.databinding.FragmentSessionRecordBinding
 
-class MainActivity : AppCompatActivity(), SessionCreateDialogFragment.DialogListener {
+class MainActivity : AppCompatActivity() {
 
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity(), SessionCreateDialogFragment.DialogList
         }
 
         binding.fab.setOnClickListener {
-            SessionCreateDialogFragment(this).show(supportFragmentManager, "session")
+            SessionCreateDialogFragment().show(supportFragmentManager, "session")
         }
     }
 
@@ -97,15 +97,6 @@ class MainActivity : AppCompatActivity(), SessionCreateDialogFragment.DialogList
         val navController = findNavController(R.id.nav_host_fragment_content_main)
         return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
-
-    override fun onStartButtonPress(sessionName: String, numPhotos: Int) {
-        val action = ScannedListFragmentDirections
-            .actionScannedListFragmentToSessionRecordFragment(sessionName, numPhotos)
-        findNavController(R.id.nav_host_fragment_content_main).navigate(action)
-    }
-
-    override fun onCloseButtonPress() {}
-
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(

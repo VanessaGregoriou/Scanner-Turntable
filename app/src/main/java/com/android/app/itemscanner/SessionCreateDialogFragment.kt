@@ -5,25 +5,20 @@ import android.app.Dialog
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import com.android.app.itemscanner.api.ScanSession
 import com.android.app.itemscanner.databinding.CreateSessionDialogBinding
+import java.text.SimpleDateFormat
+import java.util.*
 
-class SessionCreateDialogFragment(listener: DialogListener) : DialogFragment() {
+class SessionCreateDialogFragment : DialogFragment() {
 
-    private val listener: DialogListener
-
-    init {
-        this.listener = listener
-    }
-
-    /* The activity that creates an instance of this dialog fragment must
-     * implement this interface in order to receive event callbacks.
-     * Each method passes the DialogFragment in case the host needs to query it. */
-    interface DialogListener {
-        fun onStartButtonPress(sessionName: String, numPhotos: Int)
-        fun onCloseButtonPress()
+    companion object {
+        private const val FILENAME_FORMAT = "ddMMyyyyHHmm"
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -32,7 +27,7 @@ class SessionCreateDialogFragment(listener: DialogListener) : DialogFragment() {
         )
 
         binding.numPhotosSlider.value = 180f
-        binding.numPhotosSlider.addOnChangeListener { slider, value, fromUser ->
+        binding.numPhotosSlider.addOnChangeListener { _, value, _ ->
             binding.editNumPhotos.setText(
                 value.toInt().toString()
             )
@@ -55,12 +50,18 @@ class SessionCreateDialogFragment(listener: DialogListener) : DialogFragment() {
             builder
                 .setView(dialogView)
                 .setPositiveButton(R.string.start_scanning) { _, _ ->
-                    listener.onStartButtonPress(
-                        binding.sessionNameEdit.text.toString(), binding.numPhotosSlider.value.toInt())
+                    val action = ScannedListFragmentDirections
+                        .actionScannedListFragmentToSessionRecordFragment(
+                            binding.sessionNameEdit.text.toString().ifBlank {
+                                getString(R.string.default_title,
+                                SimpleDateFormat(FILENAME_FORMAT, Locale.US)
+                                    .format(System.currentTimeMillis()))
+                            },
+                            binding.numPhotosSlider.value.toInt()
+                        )
+                    findNavController().navigate(action)
                 }
-                .setNegativeButton(R.string.close) { _, _ ->
-                    listener.onCloseButtonPress()
-                }
+                .setNegativeButton(R.string.close) { _, _ -> }
             // Create the AlertDialog object and return it
             builder.create()
         } ?: throw IllegalStateException("Activity cannot be null")
