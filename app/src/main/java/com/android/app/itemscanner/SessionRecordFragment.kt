@@ -64,7 +64,14 @@ class SessionRecordFragment : Fragment() {
 
         sessionDb = SessionsDB(requireContext())
         val args = navArgs<SessionRecordFragmentArgs>().value
-        scanSession = ScanSession(title = args.sessionName, numPhotos = args.numPhotos)
+
+        val context = requireContext()
+        var sessionName = args.sessionName
+        var index = 0
+        while (File(titleOutputFile(context, sessionName)).exists()) {
+            sessionName = "${args.sessionName}_(${++index})"
+        }
+        scanSession = ScanSession(title = sessionName, numPhotos = args.numPhotos)
 
         startCamera()
 
@@ -90,11 +97,7 @@ class SessionRecordFragment : Fragment() {
     private fun startRecording() {
         val context = context ?: return
 
-        var index = 0
         var zipFile = File(titleOutputFile(context, scanSession.title))
-        while (zipFile.exists()) {
-            zipFile = File(titleOutputFile(context, "${scanSession.title}_(${++index})"))
-        }
         val fileOutputStream = FileOutputStream(zipFile)
         val checksum = CheckedOutputStream(fileOutputStream, Adler32())
         val zipOutputStream = ZipOutputStream(checksum)
