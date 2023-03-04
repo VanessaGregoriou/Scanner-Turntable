@@ -25,11 +25,14 @@ class ScannedListFragment : Fragment() {
     private val binding get() = _binding!!
 
     override fun onCreateView(
-            inflater: LayoutInflater, container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
 
         _binding = ScannedListFragmentBinding.inflate(inflater, container, false)
+        sessionsList = SessionsDB(requireContext()).getSessions()
+
         return binding.root
     }
 
@@ -75,7 +78,7 @@ class ScannedListFragment : Fragment() {
 
             binding.setSessionItem(sessions[position])
             view.tag = binding
-            return view 
+            return view
         }
 
         override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup?): View? {

@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
@@ -13,18 +12,11 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.DialogFragment
-import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.fragment.FragmentNavigator
-import com.android.app.itemscanner.api.ScanSession
 import com.android.app.itemscanner.databinding.ActivityMainBinding
-import com.android.app.itemscanner.databinding.FragmentSessionRecordBinding
 
 class MainActivity : AppCompatActivity() {
 
@@ -33,7 +25,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navController: NavController
 
     companion object {
-        private const val TAG = "CameraXApp"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS =
             mutableListOf (
@@ -59,15 +50,15 @@ class MainActivity : AppCompatActivity() {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when ((destination as FragmentNavigator.Destination).className) {
                 ScannedListFragment::class.qualifiedName -> {
+                    if (!allPermissionsGranted()) {
+                        ActivityCompat.requestPermissions(
+                            this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+                        )
+                    }
                     binding.fab.show()
                 }
                 SessionRecordFragment::class.qualifiedName -> {
-                    if (allPermissionsGranted()) {
-                        binding.fab.hide()
-                    } else {
-                        ActivityCompat.requestPermissions(
-                            this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
-                    }
+                    binding.fab.hide()
                 }
             }
         }

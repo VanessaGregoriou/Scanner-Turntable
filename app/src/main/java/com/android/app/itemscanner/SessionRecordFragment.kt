@@ -2,7 +2,6 @@ package com.android.app.itemscanner
 
 import android.content.ContentValues
 import android.content.Context
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -17,9 +16,11 @@ import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.android.app.itemscanner.api.ScanSession
 import com.android.app.itemscanner.databinding.FragmentSessionRecordBinding
 import java.io.File
 import java.io.FileInputStream
@@ -32,7 +33,6 @@ import java.util.zip.Adler32
 import java.util.zip.CheckedOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.properties.Delegates
 
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
@@ -52,8 +52,8 @@ class SessionRecordFragment : Fragment() {
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
-    private lateinit var sessionTitle: String
-    private var numPhotos by Delegates.notNull<Int>()
+    private lateinit var scanSession: ScanSession
+    private lateinit var sessionDb: SessionsDB
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,9 +62,9 @@ class SessionRecordFragment : Fragment() {
     ): View? {
         _binding = FragmentSessionRecordBinding.inflate(inflater, container, false)
 
+        sessionDb = SessionsDB(requireContext())
         val args = navArgs<SessionRecordFragmentArgs>().value
-        sessionTitle = args.sessionName
-        numPhotos = args.numPhotos
+        scanSession = ScanSession(title = args.sessionName, numPhotos = args.numPhotos)
 
         startCamera()
 
@@ -84,10 +84,18 @@ class SessionRecordFragment : Fragment() {
     private fun titleOutputFile(context: Context, title: String) =
         "${context.filesDir}/${title}.zip"
 
+    private fun imagePath(title: String) =
+        "${DIRECTORY_PATH}/${title}"
+
     private fun startRecording() {
         val context = context ?: return
 
-        val fileOutputStream = FileOutputStream(titleOutputFile(context, sessionTitle))
+        var index = 0
+        var zipFile = File(titleOutputFile(context, scanSession.title))
+        while (zipFile.exists()) {
+            zipFile = File(titleOutputFile(context, "${scanSession.title}_(${++index})"))
+        }
+        val fileOutputStream = FileOutputStream(zipFile)
         val checksum = CheckedOutputStream(fileOutputStream, Adler32())
         val zipOutputStream = ZipOutputStream(checksum)
 
@@ -96,13 +104,22 @@ class SessionRecordFragment : Fragment() {
             zipOutputStream.close()
             checksum.close()
             fileOutputStream.close()
+
+            Log.i(TAG, "Scanning complete: ${zipFile.absolutePath}")
+            scanSession.zipFile = zipFile.toUri()
+            sessionDb.insert(scanSession)
+
+            findNavController().navigate(
+                SessionRecordFragmentDirections
+                    .actionSessionRecordFragmentToScannedListFragment()
+            )
         }
     }
 
     private fun takePhoto(
         index: Int,
         zipOutputStream: ZipOutputStream,
-        closeOutputStreams: Runnable
+        finishSession: Runnable
     ) {
         val context = context ?: return
         // Get a stable reference of the modifiable image capture use case
@@ -114,7 +131,7 @@ class SessionRecordFragment : Fragment() {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/${sessionTitle}")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/${scanSession.title}")
             }
         }
 
@@ -141,22 +158,19 @@ class SessionRecordFragment : Fragment() {
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     val msg = "Photo capture succeeded: ${
-                        getString(R.string.images_progress_text, index + 1, numPhotos)
+                        getString(R.string.images_progress_text, index + 1, scanSession.numPhotos)
                     }"
                     Log.d(TAG, msg)
 
-                    zipPhoto("${sessionTitle}/${name}.jpg", zipOutputStream)
-                    if (index + 1 < numPhotos) {
+                    zipPhoto("${scanSession.title}/${name}.jpg", zipOutputStream)
+                    if (index == 0) scanSession.image = output.savedUri
+                    if (index + 1 < scanSession.numPhotos) {
                         triggerTurntable()
-                        takePhoto(index + 1, zipOutputStream, closeOutputStreams)
+                        takePhoto(index + 1, zipOutputStream, finishSession)
                     } else {
                         Toast.makeText(context, "Scanning complete.", Toast.LENGTH_SHORT).show()
-                        Log.i(TAG, "Scanning complete: ${titleOutputFile(context, sessionTitle)}")
-                        closeOutputStreams.run()
-                        findNavController().navigate(
-                            SessionRecordFragmentDirections
-                                .actionSessionRecordFragmentToScannedListFragment()
-                        )
+                        File(imagePath(scanSession.title)).deleteRecursively()
+                        finishSession.run()
                     }
                 }
             }
@@ -168,7 +182,7 @@ class SessionRecordFragment : Fragment() {
     }
 
     private fun zipPhoto(imageFilePath: String, zipOutputStream: ZipOutputStream) {
-        val imageFile = File("${DIRECTORY_PATH}/${imageFilePath}")
+        val imageFile = File(imagePath(imageFilePath))
         val fin = FileInputStream(imageFile)
         val zipEntry = ZipEntry(imageFilePath)
         zipOutputStream.putNextEntry(zipEntry)
