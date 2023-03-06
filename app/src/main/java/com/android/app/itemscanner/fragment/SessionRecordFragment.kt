@@ -1,4 +1,4 @@
-package com.android.app.itemscanner
+package com.android.app.itemscanner.fragment
 
 import android.content.ContentValues
 import android.content.Context
@@ -20,6 +20,9 @@ import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.android.app.itemscanner.*
+import com.android.app.itemscanner.fragment.SessionRecordFragmentArgs
+import com.android.app.itemscanner.fragment.SessionRecordFragmentDirections
 import com.android.app.itemscanner.api.ScanSession
 import com.android.app.itemscanner.databinding.FragmentSessionRecordBinding
 import java.io.File
@@ -53,7 +56,8 @@ class SessionRecordFragment : Fragment() {
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var scanSession: ScanSession
-    private lateinit var sessionDb: SessionsDB
+    private lateinit var databaseController: DatabaseController
+    private lateinit var usbSerialController: UsbSerialController
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -62,10 +66,12 @@ class SessionRecordFragment : Fragment() {
     ): View? {
         _binding = FragmentSessionRecordBinding.inflate(inflater, container, false)
 
-        sessionDb = SessionsDB(requireContext())
-        val args = navArgs<SessionRecordFragmentArgs>().value
-
         val context = requireContext()
+        databaseController = DatabaseController(context)
+        usbSerialController = UsbSerialController(context)
+        usbSerialController.openDevice()
+
+        val args = navArgs<SessionRecordFragmentArgs>().value
         var sessionName = args.sessionName
         var index = 0
         while (File(titleOutputFile(context, sessionName)).exists()) {
@@ -86,17 +92,19 @@ class SessionRecordFragment : Fragment() {
         super.onDestroyView()
         _binding = null
         cameraExecutor.shutdown()
+        usbSerialController.closeDevice()
     }
 
     private fun titleOutputFile(context: Context, title: String) =
         "${context.filesDir}/${title}.zip"
 
     private fun imagePath(title: String) =
-        "${DIRECTORY_PATH}/${title}"
+        "$DIRECTORY_PATH/${title}"
 
     private fun startRecording() {
         val context = context ?: return
 
+        binding.sessionStartButton.visibility = View.GONE
         var zipFile = File(titleOutputFile(context, scanSession.title))
         val fileOutputStream = FileOutputStream(zipFile)
         val checksum = CheckedOutputStream(fileOutputStream, Adler32())
@@ -110,11 +118,10 @@ class SessionRecordFragment : Fragment() {
 
             Log.i(TAG, "Scanning complete: ${zipFile.absolutePath}")
             scanSession.zipFile = zipFile.toUri()
-            sessionDb.insert(scanSession)
+            databaseController.insert(scanSession)
 
             findNavController().navigate(
-                SessionRecordFragmentDirections
-                    .actionSessionRecordFragmentToScannedListFragment()
+                SessionRecordFragmentDirections.actionSessionRecordFragmentToScannedListFragment()
             )
         }
     }
@@ -181,7 +188,7 @@ class SessionRecordFragment : Fragment() {
     }
 
     private fun triggerTurntable() {
-        // TODO: set up serial connection with arduino
+        usbSerialController.write(getString(R.string.trigger_turntable))
     }
 
     private fun zipPhoto(imageFilePath: String, zipOutputStream: ZipOutputStream) {

@@ -19,5 +19,6 @@
     <string name="session_record_fragment_label">Session Record Fragment</string>
     <string name="images_progress_text">%1$d/%2$d photos taken</string>
     <string name="start_session_button">Start</string>
+    <string name="trigger_turntable">go\n</string>
 
 </resources>

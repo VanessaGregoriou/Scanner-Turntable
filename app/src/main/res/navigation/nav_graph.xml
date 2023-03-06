@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/ScannedListFragment"
-        android:name="com.android.app.itemscanner.ScannedListFragment"
+        android:name="com.android.app.itemscanner.fragment.ScannedListFragment"
         android:label="@string/scanned_list_fragment_label"
         tools:layout="@layout/scanned_list_fragment">
 
@@ -17,7 +17,7 @@
     </fragment>
     <fragment
         android:id="@+id/SessionRecordFragment"
-        android:name="com.android.app.itemscanner.SessionRecordFragment"
+        android:name="com.android.app.itemscanner.fragment.SessionRecordFragment"
         android:label="@string/session_record_fragment_label"
         tools:layout="@layout/fragment_session_record">
 

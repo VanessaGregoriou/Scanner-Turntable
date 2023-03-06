@@ -17,6 +17,9 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.fragment.FragmentNavigator
 import com.android.app.itemscanner.databinding.ActivityMainBinding
+import com.android.app.itemscanner.fragment.ScannedListFragment
+import com.android.app.itemscanner.fragment.SessionCreateDialogFragment
+import com.android.app.itemscanner.fragment.SessionRecordFragment
 
 class MainActivity : AppCompatActivity() {
 

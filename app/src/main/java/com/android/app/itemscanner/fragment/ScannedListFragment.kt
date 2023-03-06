@@ -1,4 +1,4 @@
-package com.android.app.itemscanner
+package com.android.app.itemscanner.fragment
 
 import android.content.Context
 import android.os.Bundle
@@ -8,6 +8,8 @@ import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import com.android.app.itemscanner.R
+import com.android.app.itemscanner.DatabaseController
 import com.android.app.itemscanner.api.ScanSession
 import com.android.app.itemscanner.databinding.ScannedListFragmentBinding
 import com.android.app.itemscanner.databinding.SessionItemBinding
@@ -31,7 +33,7 @@ class ScannedListFragment : Fragment() {
     ): View? {
 
         _binding = ScannedListFragmentBinding.inflate(inflater, container, false)
-        sessionsList = SessionsDB(requireContext()).getSessions()
+        sessionsList = DatabaseController(requireContext()).getSessions()
 
         return binding.root
     }
@@ -76,7 +78,7 @@ class ScannedListFragment : Fragment() {
                 binding = convertView.tag as SessionItemBinding
             }
 
-            binding.setSessionItem(sessions[position])
+            binding.setSession(sessions[position])
             view.tag = binding
             return view
         }

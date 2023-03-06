@@ -10,7 +10,7 @@ import androidx.core.database.getStringOrNull
 import com.android.app.itemscanner.api.ScanSession
 import java.util.Date
 
-class SessionsDB(context: Context) {
+class DatabaseController(context: Context) {
 
     private val dbHelper: SessionDbHelper
 
