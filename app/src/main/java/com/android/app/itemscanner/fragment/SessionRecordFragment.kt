@@ -2,6 +2,7 @@ package com.android.app.itemscanner.fragment
 
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.ImageDecoder
 import android.os.Build
 import android.os.Bundle
@@ -22,6 +23,8 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.android.app.itemscanner.*
+import com.android.app.itemscanner.fragment.SessionRecordFragmentArgs
+import com.android.app.itemscanner.fragment.SessionRecordFragmentDirections
 import com.android.app.itemscanner.api.ScanSession
 import com.android.app.itemscanner.databinding.FragmentSessionRecordBinding
 import java.io.File
@@ -175,8 +178,7 @@ class SessionRecordFragment : Fragment() {
                     zipPhoto(imgFilePath, zipOutputStream)
                     if (index == 0) {
                         val imageSource = ImageDecoder.createSource(File(imagePath(imgFilePath)))
-                        Log.i("gregoriou", ImageDecoder.decodeBitmap(imageSource).toString())
-                        scanSession.thumbnail = ImageDecoder.decodeBitmap(imageSource)
+                        scanSession.image = ImageDecoder.decodeBitmap(imageSource)
                     }
                     if (index + 1 < scanSession.numPhotos) {
                         triggerTurntable()

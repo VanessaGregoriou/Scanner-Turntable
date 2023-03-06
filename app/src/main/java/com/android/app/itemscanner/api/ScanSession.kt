@@ -8,6 +8,6 @@ data class ScanSession(
     val title: String,
     val numPhotos: Int = 180,
     val creationTime: Date = Date(),
-    var thumbnail: Bitmap? = null,
+    var image: Bitmap? = null,
     var zipFile: Uri? = null
 )

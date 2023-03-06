@@ -55,7 +55,7 @@ class DatabaseController(context: Context) {
             put(SessionEntry.COLUMN_CREATION_TIME, scanSession.creationTime.time)
             put(SessionEntry.COLUMN_TITLE, scanSession.title)
             put(SessionEntry.COLUMN_NUM_PHOTOS, scanSession.numPhotos)
-            put(SessionEntry.COLUMN_IMAGE, scanSession.thumbnail?.toByteArray())
+            put(SessionEntry.COLUMN_IMAGE, scanSession.image?.toByteArray())
             put(SessionEntry.COLUMN_ZIP_FILE, scanSession.zipFile?.toString())
         }
         dbHelper.writableDatabase.insert(DATABASE_TABLE, null, values)
@@ -63,7 +63,6 @@ class DatabaseController(context: Context) {
 
     private fun Bitmap.toByteArray(): ByteArray {
         val outputStream = ByteArrayOutputStream()
-        Log.i("gregoriou", outputStream.toByteArray().toBitmap().toString())
         this.compress(Bitmap.CompressFormat.JPEG, 0, outputStream);
         return outputStream.toByteArray()
     }
@@ -101,11 +100,6 @@ class DatabaseController(context: Context) {
         val sessions = mutableListOf<ScanSession>()
         with(cursor) {
             while (moveToNext()) {
-                Log.i(
-                    "gregoriou",
-                    getBlobOrNull(getColumnIndexOrThrow(SessionEntry.COLUMN_IMAGE))?.toBitmap()
-                        .toString()
-                )
                 val session = ScanSession(
                     getString(getColumnIndexOrThrow(SessionEntry.COLUMN_TITLE)),
                     getLong(getColumnIndexOrThrow(SessionEntry.COLUMN_NUM_PHOTOS)).toInt(),

@@ -80,7 +80,7 @@ class ScannedListFragment : Fragment() {
             }
 
             binding.sessionTitle.text = session.title
-            session.thumbnail?.let {
+            session.image?.let {
                 binding.thumbnail.setImageBitmap(it)
             }.run {
                 binding.thumbnail.setImageDrawable(context.getDrawable(R.drawable.scanner_icon))
