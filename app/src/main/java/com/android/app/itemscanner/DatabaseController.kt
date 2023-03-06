@@ -4,11 +4,16 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.BaseColumns
+import android.util.Log
+import androidx.core.database.getBlobOrNull
 import androidx.core.database.getStringOrNull
 import com.android.app.itemscanner.api.ScanSession
-import java.util.Date
+import java.io.ByteArrayOutputStream
+import java.util.*
 
 class DatabaseController(context: Context) {
 
@@ -20,7 +25,7 @@ class DatabaseController(context: Context) {
 
     companion object {
         // If you change the database schema, you must increment the database version.
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
         private const val DATABASE_NAME = "FeedReader.db"
         private const val DATABASE_TABLE = "SessionsTable"
 
@@ -39,7 +44,7 @@ class DatabaseController(context: Context) {
                     "${SessionEntry.COLUMN_CREATION_TIME} REAL," +
                     "${SessionEntry.COLUMN_TITLE} TEXT," +
                     "${SessionEntry.COLUMN_NUM_PHOTOS} INTEGER," +
-                    "${SessionEntry.COLUMN_IMAGE} TEXT," +
+                    "${SessionEntry.COLUMN_IMAGE} BLOB," +
                     "${SessionEntry.COLUMN_ZIP_FILE} TEXT)"
 
         private const val SQL_DELETE_ENTRIES = "DROP TABLE IF EXISTS $DATABASE_TABLE"
@@ -50,11 +55,23 @@ class DatabaseController(context: Context) {
             put(SessionEntry.COLUMN_CREATION_TIME, scanSession.creationTime.time)
             put(SessionEntry.COLUMN_TITLE, scanSession.title)
             put(SessionEntry.COLUMN_NUM_PHOTOS, scanSession.numPhotos)
-            put(SessionEntry.COLUMN_IMAGE, scanSession.image?.path)
-            put(SessionEntry.COLUMN_ZIP_FILE, scanSession.zipFile?.path)
+            put(SessionEntry.COLUMN_IMAGE, scanSession.image?.toByteArray())
+            put(SessionEntry.COLUMN_ZIP_FILE, scanSession.zipFile?.toString())
         }
         dbHelper.writableDatabase.insert(DATABASE_TABLE, null, values)
     }
+
+    private fun Bitmap.toByteArray(): ByteArray {
+        val outputStream = ByteArrayOutputStream()
+        this.compress(Bitmap.CompressFormat.JPEG, 0, outputStream);
+        return outputStream.toByteArray()
+    }
+
+    private fun ByteArray.toBitmap(): Bitmap =
+        BitmapFactory.decodeByteArray(this, 0, this.size)
+
+    private fun String.toUri(): Uri =
+        Uri.parse(this)
 
     fun getSessions(): List<ScanSession> {
         // Define a projection that specifies which columns from the database
@@ -87,16 +104,9 @@ class DatabaseController(context: Context) {
                     getString(getColumnIndexOrThrow(SessionEntry.COLUMN_TITLE)),
                     getLong(getColumnIndexOrThrow(SessionEntry.COLUMN_NUM_PHOTOS)).toInt(),
                     Date(getLong(getColumnIndexOrThrow(SessionEntry.COLUMN_CREATION_TIME))),
-                    getStringOrNull(getColumnIndexOrThrow(SessionEntry.COLUMN_IMAGE)).let {
-                        Uri.parse(
-                            it
-                        )
-                    },
-                    getStringOrNull(getColumnIndexOrThrow(SessionEntry.COLUMN_ZIP_FILE)).let {
-                        Uri.parse(
-                            it
-                        )
-                    })
+                    getBlobOrNull(getColumnIndexOrThrow(SessionEntry.COLUMN_IMAGE))?.toBitmap(),
+                    getStringOrNull(getColumnIndexOrThrow(SessionEntry.COLUMN_ZIP_FILE))?.toUri()
+                )
                 sessions.add(session)
             }
         }

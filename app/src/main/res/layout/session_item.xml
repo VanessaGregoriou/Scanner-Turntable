@@ -11,31 +11,45 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/session_item"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp">
+        android:layout_height="wrap_content">
 
-        <ImageView
-            android:id="@+id/thumbnail"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
-            android:layout_marginEnd="4dp"
+        <FrameLayout
+            android:id="@+id/thumbnail_layout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="@dimen/thumbnail_margin"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/session_title"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintVertical_bias="0.0">
+
+            <ImageView
+                android:id="@+id/thumbnail"
+                android:layout_width="@dimen/thumbnail_size"
+                android:layout_height="@dimen/thumbnail_size" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/session_title"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:text="@{session.title}"
-            android:textSize="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/thumbnail"
+            android:layout_marginStart="@dimen/content_margin"
+            android:text="item scanned"
+            android:textAlignment="viewStart"
+            android:textSize="@dimen/scanned_list_title_text_size"
             app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/thumbnail_layout"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <ImageButton
+            android:id="@+id/chevron"
+            android:layout_width="@dimen/chevron_icon_size"
+            android:layout_height="@dimen/chevron_icon_size"
+            android:background="@android:color/transparent"
+            android:src="@drawable/baseline_chevron_right_24"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

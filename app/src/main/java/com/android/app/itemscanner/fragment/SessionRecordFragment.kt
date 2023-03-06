@@ -2,6 +2,8 @@ package com.android.app.itemscanner.fragment
 
 import android.content.ContentValues
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -172,14 +174,18 @@ class SessionRecordFragment : Fragment() {
                     }"
                     Log.d(TAG, msg)
 
-                    zipPhoto("${scanSession.title}/${name}.jpg", zipOutputStream)
-                    if (index == 0) scanSession.image = output.savedUri
+                    val imgFilePath = "${scanSession.title}/$name.jpg"
+                    zipPhoto(imgFilePath, zipOutputStream)
+                    if (index == 0) {
+                        val imageSource = ImageDecoder.createSource(File(imagePath(imgFilePath)))
+                        scanSession.image = ImageDecoder.decodeBitmap(imageSource)
+                    }
                     if (index + 1 < scanSession.numPhotos) {
                         triggerTurntable()
                         takePhoto(index + 1, zipOutputStream, finishSession)
                     } else {
                         Toast.makeText(context, "Scanning complete.", Toast.LENGTH_SHORT).show()
-                        File(imagePath(scanSession.title)).deleteRecursively()
+                        // File(imagePath(scanSession.title)).deleteRecursively()
                         finishSession.run()
                     }
                 }

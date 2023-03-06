@@ -67,6 +67,7 @@ class ScannedListFragment : Fragment() {
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
             var view: View
             val binding: SessionItemBinding
+            val session = sessions[position]
             if (convertView == null) {
                 binding = DataBindingUtil.inflate(
                     LayoutInflater.from(context),
@@ -78,7 +79,13 @@ class ScannedListFragment : Fragment() {
                 binding = convertView.tag as SessionItemBinding
             }
 
-            binding.setSession(sessions[position])
+            binding.sessionTitle.text = session.title
+            session.image?.let {
+                binding.thumbnail.setImageBitmap(it)
+            }.run {
+                binding.thumbnail.setImageDrawable(context.getDrawable(R.drawable.scanner_icon))
+            }
+            binding.invalidateAll()
             view.tag = binding
             return view
         }
