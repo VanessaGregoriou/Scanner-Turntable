@@ -8,9 +8,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.BaseColumns
-import android.util.Log
-import androidx.core.database.getBlobOrNull
-import androidx.core.database.getStringOrNull
 import com.android.app.itemscanner.api.ScanSession
 import java.io.ByteArrayOutputStream
 import java.util.*
@@ -61,6 +58,25 @@ class DatabaseController(context: Context) {
         dbHelper.writableDatabase.insert(DATABASE_TABLE, null, values)
     }
 
+    fun editTitle(newTitle: String, scanSession: ScanSession) {
+        val contentValues = ContentValues()
+        contentValues.put(SessionEntry.COLUMN_TITLE, newTitle)
+        dbHelper.writableDatabase.update(
+            DATABASE_TABLE,
+            contentValues,
+            whereClause(scanSession),
+            null
+        )
+    }
+
+    private fun whereClause(scanSession: ScanSession): String {
+        return SessionEntry.COLUMN_CREATION_TIME + " = " + scanSession.creationTime.time.toString()
+    }
+
+    fun deleteSession(scanSession: ScanSession) {
+        dbHelper.writableDatabase.delete(DATABASE_TABLE, whereClause(scanSession), null)
+    }
+
     private fun Bitmap.toByteArray(): ByteArray {
         val outputStream = ByteArrayOutputStream()
         this.compress(Bitmap.CompressFormat.JPEG, 0, outputStream);
@@ -104,8 +120,8 @@ class DatabaseController(context: Context) {
                     getString(getColumnIndexOrThrow(SessionEntry.COLUMN_TITLE)),
                     getLong(getColumnIndexOrThrow(SessionEntry.COLUMN_NUM_PHOTOS)).toInt(),
                     Date(getLong(getColumnIndexOrThrow(SessionEntry.COLUMN_CREATION_TIME))),
-                    getBlobOrNull(getColumnIndexOrThrow(SessionEntry.COLUMN_IMAGE))?.toBitmap(),
-                    getStringOrNull(getColumnIndexOrThrow(SessionEntry.COLUMN_ZIP_FILE))?.toUri()
+                    getBlob(getColumnIndexOrThrow(SessionEntry.COLUMN_IMAGE)).toBitmap(),
+                    getString(getColumnIndexOrThrow(SessionEntry.COLUMN_ZIP_FILE)).toUri()
                 )
                 sessions.add(session)
             }

@@ -39,8 +39,7 @@ class SessionCreateDialogFragment : DialogFragment() {
 
         return activity?.let {
             // Use the Builder class for convenient dialog construction
-            val builder = AlertDialog.Builder(it)
-            builder
+            AlertDialog.Builder(it)
                 .setView(dialogView)
                 .setPositiveButton(R.string.dialog_start_button) { _, _ ->
                     val action =
@@ -51,10 +50,7 @@ class SessionCreateDialogFragment : DialogFragment() {
                             binding.numPhotosSlider.value.toInt()
                         )
                     findNavController().navigate(action)
-                }
-                .setNegativeButton(R.string.dialog_close_button) { _, _ -> }
-            // Create the AlertDialog object and return it
-            builder.create()
+                }.create()
         } ?: throw IllegalStateException("Activity cannot be null")
     }
 }

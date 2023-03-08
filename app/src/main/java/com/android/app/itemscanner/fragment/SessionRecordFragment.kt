@@ -38,6 +38,7 @@ import java.util.zip.Adler32
 import java.util.zip.CheckedOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.properties.Delegates
 
 /**
  * A simple [Fragment] subclass as the second destination in the navigation.
@@ -57,9 +58,12 @@ class SessionRecordFragment : Fragment() {
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
-    private lateinit var scanSession: ScanSession
     private lateinit var databaseController: DatabaseController
     private lateinit var usbSerialController: UsbSerialController
+
+    private lateinit var title: String
+    private var numPhotos by Delegates.notNull<Int>()
+    private lateinit var image: Bitmap
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -79,7 +83,8 @@ class SessionRecordFragment : Fragment() {
         while (File(titleOutputFile(context, sessionName)).exists()) {
             sessionName = "${args.sessionName}_(${++index})"
         }
-        scanSession = ScanSession(title = sessionName, numPhotos = args.numPhotos)
+        title = sessionName
+        numPhotos = args.numPhotos
 
         startCamera()
 
@@ -107,7 +112,7 @@ class SessionRecordFragment : Fragment() {
         val context = context ?: return
 
         binding.sessionStartButton.visibility = View.GONE
-        var zipFile = File(titleOutputFile(context, scanSession.title))
+        var zipFile = File(titleOutputFile(context, title))
         val fileOutputStream = FileOutputStream(zipFile)
         val checksum = CheckedOutputStream(fileOutputStream, Adler32())
         val zipOutputStream = ZipOutputStream(checksum)
@@ -119,8 +124,15 @@ class SessionRecordFragment : Fragment() {
             fileOutputStream.close()
 
             Log.i(TAG, "Scanning complete: ${zipFile.absolutePath}")
-            scanSession.zipFile = zipFile.toUri()
-            databaseController.insert(scanSession)
+            zipFile.toUri()
+            databaseController.insert(
+                ScanSession(
+                    title = title,
+                    numPhotos = numPhotos,
+                    image = image,
+                    zipFile = zipFile.toUri()
+                )
+            )
 
             findNavController().navigate(
                 SessionRecordFragmentDirections.actionSessionRecordFragmentToScannedListFragment()
@@ -143,7 +155,7 @@ class SessionRecordFragment : Fragment() {
             put(MediaStore.MediaColumns.DISPLAY_NAME, name)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
             if (Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
-                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/${scanSession.title}")
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/${title}")
             }
         }
 
@@ -170,17 +182,17 @@ class SessionRecordFragment : Fragment() {
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                     val msg = "Photo capture succeeded: ${
-                        getString(R.string.images_progress_text, index + 1, scanSession.numPhotos)
+                        getString(R.string.images_progress_text, index + 1, numPhotos)
                     }"
                     Log.d(TAG, msg)
 
-                    val imgFilePath = "${scanSession.title}/$name.jpg"
+                    val imgFilePath = "$title/$name.jpg"
                     zipPhoto(imgFilePath, zipOutputStream)
                     if (index == 0) {
                         val imageSource = ImageDecoder.createSource(File(imagePath(imgFilePath)))
-                        scanSession.image = ImageDecoder.decodeBitmap(imageSource)
+                        image = ImageDecoder.decodeBitmap(imageSource)
                     }
-                    if (index + 1 < scanSession.numPhotos) {
+                    if (index + 1 < numPhotos) {
                         triggerTurntable()
                         takePhoto(index + 1, zipOutputStream, finishSession)
                     } else {

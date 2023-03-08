@@ -3,9 +3,12 @@
     <string name="action_settings">Settings</string>
     <string name="database">scannerDB</string>
 
-    <!-- Strings used for fragments for navigation -->
+    <!-- Strings for list view -->
     <string name="scanned_list_fragment_label">Scan sessions</string>
     <string name="add_first_session">Tap below to add first session</string>
+    <string name="rename_session">Rename</string>
+    <string name="share_session">Share</string>
+    <string name="delete_session">Delete</string>
 
     <!-- Create session dialog -->
     <string name="dialog_start_button">Start scanning</string>
