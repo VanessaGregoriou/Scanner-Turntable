@@ -1,25 +1,31 @@
 package com.android.app.itemscanner
 
 import android.Manifest
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.usb.UsbManager
 import android.os.Build
 import android.os.Bundle
-import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
-import androidx.navigation.ui.setupActionBarWithNavController
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigator
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.navigateUp
+import androidx.navigation.ui.setupActionBarWithNavController
 import com.android.app.itemscanner.databinding.ActivityMainBinding
 import com.android.app.itemscanner.fragment.ScannedListFragment
 import com.android.app.itemscanner.fragment.SessionCreateDialogFragment
 import com.android.app.itemscanner.fragment.SessionRecordFragment
+import com.hoho.android.usbserial.driver.UsbSerialProber
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,13 +36,14 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS =
-            mutableListOf (
+            mutableListOf(
                 Manifest.permission.CAMERA,
             ).apply {
                 if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
                     add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 }
             }.toTypedArray()
+        private const val ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,10 +65,29 @@ class MainActivity : AppCompatActivity() {
                             this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
                         )
                     }
+                    val manager = getSystemService(Context.USB_SERVICE) as UsbManager
+                    if (manager.deviceList.isEmpty()) return@addOnDestinationChangedListener
+                    val availableDrivers =
+                        UsbSerialProber.getDefaultProber().findAllDrivers(manager)
+                    if (availableDrivers.isEmpty()) return@addOnDestinationChangedListener
+
+                    // Open a connection to the first available driver.
+                    val driver = availableDrivers[0]
+                    if (driver.ports.isEmpty()) return@addOnDestinationChangedListener
+                    manager.requestPermission(
+                        driver.device,
+                        PendingIntent.getBroadcast(
+                            this,
+                            0,
+                            Intent(ACTION_USB_PERMISSION),
+                            PendingIntent.FLAG_IMMUTABLE
+                        )
+                    )
                     binding.fab.show()
                 }
                 SessionRecordFragment::class.qualifiedName -> {
                     binding.fab.hide()
+
                 }
             }
         }

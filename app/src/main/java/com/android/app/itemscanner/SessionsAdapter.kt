@@ -130,8 +130,6 @@ class SessionsAdapter(
                 // getExternalFilesDir() + "/Pictures" should match the declaration in fileprovider.xml paths
                 val file = File(scanSession.zipFile.path)
 
-                // wrap File object into a content provider. NOTE: authority here should match authority in manifest declaration
-
                 val sendIntent: Intent = Intent().apply {
                     action = Intent.ACTION_SEND
                     putExtra(
