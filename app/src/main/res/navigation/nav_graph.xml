@@ -14,9 +14,6 @@
         <action
             android:id="@+id/action_ScannedListFragment_to_SessionRecordFragment"
             app:destination="@id/SessionRecordFragment" />
-        <action
-            android:id="@+id/action_ScannedListFragment_self"
-            app:destination="@id/ScannedListFragment" />
     </fragment>
     <fragment
         android:id="@+id/SessionRecordFragment"
@@ -26,7 +23,8 @@
 
         <action
             android:id="@+id/action_SessionRecordFragment_to_ScannedListFragment"
-            app:destination="@id/ScannedListFragment" />
+            app:destination="@id/ScannedListFragment"
+            app:popUpToInclusive="false" />
         <argument
             android:name="sessionName"
             app:argType="string" />

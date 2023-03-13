@@ -17,7 +17,6 @@ import androidx.navigation.NavController
 import com.android.app.itemscanner.api.ScanSession
 import com.android.app.itemscanner.api.SessionItemViewModel
 import com.android.app.itemscanner.databinding.SessionItemBinding
-import com.android.app.itemscanner.fragment.ScannedListFragmentDirections
 import java.io.File
 
 
@@ -134,7 +133,7 @@ class SessionsAdapter(
                     .setView(input)
                     .setPositiveButton("OK") { _, _ ->
                         database.editTitle(input.text.toString(), scanSession)
-                        binding.invalidateAll()
+                        navController.navigate(R.id.ScannedListFragment)
                     }.show()
             }
         }
@@ -163,9 +162,7 @@ class SessionsAdapter(
         override fun onDeleteClick(): View.OnClickListener {
             return View.OnClickListener {
                 database.deleteSession(scanSession)
-                navController.navigate(
-                    ScannedListFragmentDirections.actionScannedListFragmentSelf()
-                )
+                navController.navigate(R.id.ScannedListFragment)
             }
         }
 
