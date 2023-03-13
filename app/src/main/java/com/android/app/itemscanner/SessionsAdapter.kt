@@ -13,9 +13,11 @@ import android.widget.ArrayAdapter
 import android.widget.EditText
 import androidx.core.content.FileProvider
 import androidx.databinding.DataBindingUtil
+import androidx.navigation.NavController
 import com.android.app.itemscanner.api.ScanSession
 import com.android.app.itemscanner.api.SessionItemViewModel
 import com.android.app.itemscanner.databinding.SessionItemBinding
+import com.android.app.itemscanner.fragment.ScannedListFragmentDirections
 import java.io.File
 
 
@@ -23,15 +25,18 @@ class SessionsAdapter(
     context: Context,
     resource: Int,
     sessions: List<ScanSession>,
-    databaseController: DatabaseController
+    databaseController: DatabaseController,
+    navController: NavController
 ) :
     ArrayAdapter<ScanSession>(context, resource, sessions) {
 
     private val databaseController: DatabaseController
+    private val navController: NavController
     private val sessions: List<ScanSession>
 
     init {
         this.databaseController = databaseController
+        this.navController = navController
         this.sessions = sessions
     }
 
@@ -51,7 +56,13 @@ class SessionsAdapter(
 
         view.tag = binding
         binding.sessionViewModel =
-            SessionItemViewModelImpl(context, binding, databaseController, sessions[position])
+            SessionItemViewModelImpl(
+                context,
+                binding,
+                databaseController,
+                navController,
+                sessions[position]
+            )
         return view
     }
 
@@ -63,11 +74,13 @@ class SessionsAdapter(
         context: Context,
         binding: SessionItemBinding,
         database: DatabaseController,
+        navController: NavController,
         scanSession: ScanSession
     ) : SessionItemViewModel {
         private val context: Context
         private val binding: SessionItemBinding
         private val database: DatabaseController
+        private val navController: NavController
         private val scanSession: ScanSession
         private var showExtraDetails: Boolean
 
@@ -75,8 +88,9 @@ class SessionsAdapter(
             this.context = context
             this.binding = binding
             this.database = database
+            this.navController = navController
             this.scanSession = scanSession
-            this.showExtraDetails = true
+            this.showExtraDetails = false
         }
 
         override fun getTitle(): String {
@@ -149,6 +163,9 @@ class SessionsAdapter(
         override fun onDeleteClick(): View.OnClickListener {
             return View.OnClickListener {
                 database.deleteSession(scanSession)
+                navController.navigate(
+                    ScannedListFragmentDirections.actionScannedListFragmentSelf()
+                )
             }
         }
 

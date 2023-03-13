@@ -60,6 +60,7 @@ class MainActivity : AppCompatActivity() {
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when ((destination as FragmentNavigator.Destination).className) {
                 ScannedListFragment::class.qualifiedName -> {
+                    binding.fab.show()
                     if (!allPermissionsGranted()) {
                         ActivityCompat.requestPermissions(
                             this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
@@ -83,7 +84,6 @@ class MainActivity : AppCompatActivity() {
                             PendingIntent.FLAG_IMMUTABLE
                         )
                     )
-                    binding.fab.show()
                 }
                 SessionRecordFragment::class.qualifiedName -> {
                     binding.fab.hide()
