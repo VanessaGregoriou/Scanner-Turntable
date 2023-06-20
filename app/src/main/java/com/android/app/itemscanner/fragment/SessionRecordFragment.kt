@@ -114,7 +114,7 @@ class SessionRecordFragment : Fragment() {
         binding.sessionStartButton.visibility = View.GONE
         binding.photosCarousel.visibility = View.VISIBLE
 
-        var zipFile = File(titleOutputFile(context, title))
+        val zipFile = File(titleOutputFile(context, title))
         val fileOutputStream = FileOutputStream(zipFile)
         val checksum = CheckedOutputStream(fileOutputStream, Adler32())
         val zipOutputStream = ZipOutputStream(checksum)
@@ -215,10 +215,9 @@ class SessionRecordFragment : Fragment() {
     private fun triggerTurntable(onResponse: Runnable) {
         usbSerialController.writeWithResponse(
             getString(R.string.trigger_turntable),
-            getString(R.string.turntable_response)) {
-            onResponse.run()
-            usbSerialController.closeIoManager()
-        }
+            getString(R.string.turntable_response),
+            onResponse
+        )
     }
 
     private fun zipPhoto(imageFilePath: String, zipOutputStream: ZipOutputStream) {
