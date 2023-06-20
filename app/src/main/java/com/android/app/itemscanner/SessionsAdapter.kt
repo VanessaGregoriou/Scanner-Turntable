@@ -65,9 +65,7 @@ class SessionsAdapter(
         return view
     }
 
-    override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup?): View? {
-        return convertView
-    }
+    override fun getDropDownView(position: Int, convertView: View?, parent: ViewGroup?) = convertView
 
     private class SessionItemViewModelImpl(
         context: Context,
@@ -92,29 +90,15 @@ class SessionsAdapter(
             this.showExtraDetails = false
         }
 
-        override fun getTitle(): String {
-            return scanSession.title
-        }
+        override fun getTitle() = scanSession.title
 
-        override fun getThumbnail(): Drawable? {
-            return scanSession.image?.let {
-                BitmapDrawable(context.resources, it)
-            }.run {
-                context.getDrawable(R.drawable.scanner_icon)
-            }
-        }
+        override fun getThumbnail() = BitmapDrawable(context.resources, scanSession.image)
 
-        override fun getCreationData(): String {
-            return scanSession.creationTime.toString()
-        }
+        override fun getCreationData() = scanSession.creationTime.toString()
 
-        override fun getNumPhotos(): Int {
-            return scanSession.numPhotos
-        }
+        override fun getNumPhotos() = scanSession.numPhotos
 
-        override fun showExtraDetails(): Boolean {
-            return showExtraDetails
-        }
+        override fun showExtraDetails() = showExtraDetails
 
         override fun onToggleDetailsClick(): View.OnClickListener {
             return View.OnClickListener {

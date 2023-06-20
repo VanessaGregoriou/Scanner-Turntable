@@ -3,6 +3,7 @@ package com.android.app.itemscanner.fragment
 import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.os.Build
 import android.os.Bundle
@@ -11,6 +12,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageCapture
@@ -23,8 +25,6 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.android.app.itemscanner.*
-import com.android.app.itemscanner.fragment.SessionRecordFragmentArgs
-import com.android.app.itemscanner.fragment.SessionRecordFragmentDirections
 import com.android.app.itemscanner.api.ScanSession
 import com.android.app.itemscanner.databinding.FragmentSessionRecordBinding
 import java.io.File
@@ -112,6 +112,8 @@ class SessionRecordFragment : Fragment() {
         val context = context ?: return
 
         binding.sessionStartButton.visibility = View.GONE
+        binding.photosCarousel.visibility = View.VISIBLE
+
         var zipFile = File(titleOutputFile(context, title))
         val fileOutputStream = FileOutputStream(zipFile)
         val checksum = CheckedOutputStream(fileOutputStream, Adler32())
@@ -124,7 +126,6 @@ class SessionRecordFragment : Fragment() {
             fileOutputStream.close()
 
             Log.i(TAG, "Scanning complete: ${zipFile.absolutePath}")
-            zipFile.toUri()
             databaseController.insert(
                 ScanSession(
                     title = title,
@@ -188,16 +189,22 @@ class SessionRecordFragment : Fragment() {
 
                     val imgFilePath = "$title/$name.jpg"
                     zipPhoto(imgFilePath, zipOutputStream)
+
+                    val imageFile = File(imagePath(imgFilePath))
+
+                    val imageView = ImageView(context)
+                    imageView.setImageURI(imageFile.toUri())
+                    binding.photosCarousel.addView(imageView)
+
                     if (index == 0) {
-                        val imageSource = ImageDecoder.createSource(File(imagePath(imgFilePath)))
-                        image = ImageDecoder.decodeBitmap(imageSource)
+                        val imageSource = BitmapFactory.decodeFile(imagePath(imgFilePath))
+                        image = imageSource
                     }
                     if (index + 1 < numPhotos) {
-                        triggerTurntable()
-                        takePhoto(index + 1, zipOutputStream, finishSession)
+                        triggerTurntable { takePhoto(index + 1, zipOutputStream, finishSession) }
                     } else {
                         Toast.makeText(context, "Scanning complete.", Toast.LENGTH_SHORT).show()
-                        // File(imagePath(scanSession.title)).deleteRecursively()
+                        File(imagePath(title)).deleteRecursively()
                         finishSession.run()
                     }
                 }
@@ -205,8 +212,11 @@ class SessionRecordFragment : Fragment() {
         )
     }
 
-    private fun triggerTurntable() {
-        usbSerialController.write(getString(R.string.trigger_turntable))
+    private fun triggerTurntable(onResponse: Runnable) {
+        usbSerialController.writeWithResponse(
+            getString(R.string.trigger_turntable),
+            getString(R.string.turntable_response),
+            onResponse)
     }
 
     private fun zipPhoto(imageFilePath: String, zipOutputStream: ZipOutputStream) {

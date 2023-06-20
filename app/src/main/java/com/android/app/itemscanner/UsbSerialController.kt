@@ -6,6 +6,9 @@ import android.text.SpannableStringBuilder
 import android.util.Log
 import com.hoho.android.usbserial.driver.UsbSerialPort
 import com.hoho.android.usbserial.driver.UsbSerialProber
+import com.hoho.android.usbserial.util.SerialInputOutputManager
+import java.lang.Exception
+import java.nio.charset.Charset
 
 
 class UsbSerialController(context: Context) {
@@ -23,16 +26,38 @@ class UsbSerialController(context: Context) {
         this.context = context
     }
 
-    fun write(msg: String) {
+    fun writeWithResponse(msg: String, expectedResponse: String, onResponse: Runnable) {
         val port = port ?: return
         if (port.isOpen) {
-            port.write(msg.toByteArray(), WAIT_MILLIS)
+            val ioManager = SerialInputOutputManager(port, SerialListener(expectedResponse, onResponse))
+            ioManager.start()
+
+            port.write((msg + '\n').toByteArray(), WAIT_MILLIS)
             Log.i(TAG, "sent $msg")
-            val buffer = ByteArray(8192)
-            while (!buffer.toHex().contains("stepped")) {
-                port.read(buffer, WAIT_MILLIS)
+        }
+    }
+
+    private class SerialListener(validResponse: String, onResponse: Runnable) : SerialInputOutputManager.Listener {
+        private val validResponse: String
+        private val onResponse: Runnable
+
+        init {
+            this.validResponse = validResponse
+            this.onResponse = onResponse
+        }
+
+        override fun onNewData(data: ByteArray?) {
+            Log.i("gregoriou", "$data")
+            val data = data ?: return
+            Log.i("gregoriou", "${validResponse.length} ${String(data)}")
+            if (String(data) == validResponse) {
+                onResponse.run()
+                Log.i(TAG, "received ${data.size}")
             }
-            Log.i(TAG, "received ${buffer.toHex()}")
+        }
+
+        override fun onRunError(e: Exception?) {
+            // Error will return when the port closed. Ignore this
         }
     }
 
