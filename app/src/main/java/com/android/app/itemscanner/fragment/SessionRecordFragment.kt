@@ -74,7 +74,7 @@ class SessionRecordFragment : Fragment() {
 
         val context = requireContext()
         databaseController = DatabaseController(context)
-        usbSerialController = UsbSerialController(context)
+        usbSerialController = UsbSerialController(requireActivity())
         usbSerialController.openDevice()
 
         val args = navArgs<SessionRecordFragmentArgs>().value
@@ -215,8 +215,10 @@ class SessionRecordFragment : Fragment() {
     private fun triggerTurntable(onResponse: Runnable) {
         usbSerialController.writeWithResponse(
             getString(R.string.trigger_turntable),
-            getString(R.string.turntable_response),
-            onResponse)
+            getString(R.string.turntable_response)) {
+            onResponse.run()
+            usbSerialController.closeIoManager()
+        }
     }
 
     private fun zipPhoto(imageFilePath: String, zipOutputStream: ZipOutputStream) {

@@ -1,5 +1,6 @@
 package com.android.app.itemscanner
 
+import android.app.Activity
 import android.content.Context
 import android.hardware.usb.UsbManager
 import android.text.SpannableStringBuilder
@@ -11,7 +12,7 @@ import java.lang.Exception
 import java.nio.charset.Charset
 
 
-class UsbSerialController(context: Context) {
+class UsbSerialController(activity: Activity) {
 
     companion object {
         private const val TAG = "UsbSerialController"
@@ -19,40 +20,47 @@ class UsbSerialController(context: Context) {
         private const val ACTION_USB_PERMISSION = "com.android.example.USB_PERMISSION"
     }
 
-    private val context: Context
+    private val activity: Activity
     private var port: UsbSerialPort? = null
+    private var ioManager: SerialInputOutputManager? = null
 
     init {
-        this.context = context
+        this.activity = activity
     }
 
     fun writeWithResponse(msg: String, expectedResponse: String, onResponse: Runnable) {
         val port = port ?: return
         if (port.isOpen) {
-            val ioManager = SerialInputOutputManager(port, SerialListener(expectedResponse, onResponse))
-            ioManager.start()
+            ioManager =
+                SerialInputOutputManager(
+                    port, SerialListener(activity, expectedResponse, onResponse))
+            ioManager?.start()
 
             port.write((msg + '\n').toByteArray(), WAIT_MILLIS)
-            Log.i(TAG, "sent $msg")
+            Log.i("gregoriou", "sent $msg")
         }
     }
 
-    private class SerialListener(validResponse: String, onResponse: Runnable) : SerialInputOutputManager.Listener {
+    private class SerialListener(activity: Activity, validResponse: String, onResponse: Runnable)
+        : SerialInputOutputManager.Listener {
+        private val activity: Activity
         private val validResponse: String
         private val onResponse: Runnable
 
         init {
+            this.activity = activity
             this.validResponse = validResponse
             this.onResponse = onResponse
         }
 
         override fun onNewData(data: ByteArray?) {
-            Log.i("gregoriou", "$data")
-            val data = data ?: return
-            Log.i("gregoriou", "${validResponse.length} ${String(data)}")
-            if (String(data) == validResponse) {
-                onResponse.run()
-                Log.i(TAG, "received ${data.size}")
+            activity.runOnUiThread {
+                val data = data ?: return@runOnUiThread
+                Log.i("gregoriou", "response: ${String(data)}")
+                if (String(data) == validResponse) {
+                    onResponse.run()
+                    Log.i("gregoriou", "received ${data.size} bytes")
+                }
             }
         }
 
@@ -61,12 +69,9 @@ class UsbSerialController(context: Context) {
         }
     }
 
-    fun ByteArray.toHex(): String =
-        joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }
-
     fun openDevice() {
         // Find all available drivers from attached devices.
-        val manager = context.getSystemService(Context.USB_SERVICE) as UsbManager? ?: return
+        val manager = activity.getSystemService(Context.USB_SERVICE) as UsbManager? ?: return
         if (manager.deviceList.isEmpty()) return
         val availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager)
         if (availableDrivers.isEmpty()) return
@@ -83,9 +88,15 @@ class UsbSerialController(context: Context) {
         }
         port?.open(connection)
         port?.setParameters(115200, 8, UsbSerialPort.STOPBITS_1, UsbSerialPort.PARITY_NONE)
+        port?.dtr = true
     }
 
     fun closeDevice() {
         port?.close()
+    }
+
+    fun closeIoManager() {
+        ioManager?.stop()
+        ioManager = null
     }
 }
