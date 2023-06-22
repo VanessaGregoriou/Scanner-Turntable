@@ -22,18 +22,25 @@ class UsbSerialController(activity: Activity) {
         this.activity = activity
     }
 
+    /**
+     * Write to the USB Serial device and waits for expectedResponse before running onResponse.
+     * If port is missing or closed, run onResponse immediately.
+     */
     fun writeWithResponse(msg: String, expectedResponse: String, onResponse: Runnable) {
-        val port = port ?: return
-        if (port.isOpen) {
-            port.write((msg + '\n').toByteArray(), WAIT_MILLIS)
-            Log.i(TAG, "sent $msg")
+        if (port == null || !port!!.isOpen) {
+            onResponse.run()
+            Log.i(TAG, "port is closed, running onResponse")
+            return
+        }
+        val port = port!!
+        port.write((msg + '\n').toByteArray(), WAIT_MILLIS)
+        Log.i(TAG, "sent $msg")
 
-            val response = ByteArray(expectedResponse.length)
-            port.read(response, WAIT_MILLIS)
-            if (String(response) == expectedResponse) {
-                onResponse.run()
-                Log.i(TAG, "received ${response.size} bytes")
-            }
+        val response = ByteArray(expectedResponse.length)
+        port.read(response, WAIT_MILLIS)
+        if (String(response) == expectedResponse) {
+            onResponse.run()
+            Log.i(TAG, "received ${response.size} bytes")
         }
     }
 
