@@ -4,6 +4,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -213,7 +214,8 @@ class SessionRecordFragment : Fragment() {
                     }, 100L)
 
                     if (index == 0) {
-                        val imageSource = BitmapFactory.decodeFile(imagePath(imgFilePath))
+                        val imageSource =
+                            BitmapFactory.decodeFile(imagePath(imgFilePath)).rotate(90f)
                         image = imageSource
                     }
                     if (index + 1 < numPhotos) {
@@ -280,5 +282,10 @@ class SessionRecordFragment : Fragment() {
                 Log.e(TAG, "Use case binding failed", exc)
             }
         }, ContextCompat.getMainExecutor(context))
+    }
+
+    private fun Bitmap.rotate(degrees: Float): Bitmap {
+        val matrix = Matrix().apply { postRotate(degrees) }
+        return Bitmap.createBitmap(this, 0, 0, width, height, matrix, true)
     }
 }

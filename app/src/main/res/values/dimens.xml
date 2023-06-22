@@ -1,10 +1,10 @@
 <resources>
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="item_margin">8dp</dimen>
-    <dimen name="thumbnail_size">50dp</dimen>
+    <dimen name="thumbnail_size">100dp</dimen>
     <dimen name="content_margin">16dp</dimen>
     <dimen name="scanned_list_title_text_size">20dp</dimen>
-    <dimen name="scanned_list_options_text_size">16dp</dimen>
+    <dimen name="scanned_list_options_text_size">14dp</dimen>
     <dimen name="session_record_num_photos_text_size">32dp</dimen>
     <dimen name="chevron_icon_size">48dp</dimen>
     <dimen name="carousel_height">100dp</dimen>
