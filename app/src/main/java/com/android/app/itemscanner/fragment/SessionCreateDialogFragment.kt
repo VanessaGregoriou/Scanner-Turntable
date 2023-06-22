@@ -11,6 +11,8 @@ import androidx.navigation.fragment.findNavController
 import com.android.app.itemscanner.R
 import com.android.app.itemscanner.fragment.ScannedListFragmentDirections
 import com.android.app.itemscanner.databinding.CreateSessionDialogBinding
+import kotlin.math.max
+import kotlin.math.min
 
 class SessionCreateDialogFragment : DialogFragment() {
 
@@ -19,7 +21,7 @@ class SessionCreateDialogFragment : DialogFragment() {
             layoutInflater, R.layout.create_session_dialog, null, false
         )
 
-        binding.numPhotosSlider.value = 10f
+        binding.numPhotosSlider.value = 180f
         binding.numPhotosSlider.addOnChangeListener { _, value, _ ->
             binding.editNumPhotos.setText(
                 value.toInt().toString()
@@ -27,11 +29,19 @@ class SessionCreateDialogFragment : DialogFragment() {
         }
         binding.editNumPhotos.setText(binding.numPhotosSlider.value.toInt().toString())
         binding.editNumPhotos.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {}
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                binding.numPhotosSlider.value = s.toString().toFloat()
+            override fun afterTextChanged(s: Editable?) {
+                if (s.isNullOrBlank()) {
+                    return
+                }
+                val num = s.toString().toFloat()
+                binding.numPhotosSlider.value = min(
+                    max(num, binding.numPhotosSlider.valueFrom),
+                    binding.numPhotosSlider.valueTo
+                )
             }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
         })
 
         val dialogView = binding.root
