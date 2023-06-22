@@ -4,7 +4,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.ImageDecoder
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -12,6 +11,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.HorizontalScrollView
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.camera.core.CameraSelector
@@ -114,6 +114,11 @@ class SessionRecordFragment : Fragment() {
         binding.sessionStartButton.visibility = View.GONE
         binding.photosCarousel.visibility = View.VISIBLE
 
+        val progressText =
+            getString(R.string.images_progress_text, 0, numPhotos)
+        binding.progressText.text = progressText
+        binding.progressText.invalidate()
+
         val zipFile = File(titleOutputFile(context, title))
         val fileOutputStream = FileOutputStream(zipFile)
         val checksum = CheckedOutputStream(fileOutputStream, Adler32())
@@ -182,9 +187,11 @@ class SessionRecordFragment : Fragment() {
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
-                    val msg = "Photo capture succeeded: ${
+                    val progressText =
                         getString(R.string.images_progress_text, index + 1, numPhotos)
-                    }"
+                    binding.progressText.text = progressText
+                    binding.progressText.invalidate()
+                    val msg = "Photo capture succeeded: $progressText"
                     Log.d(TAG, msg)
 
                     val imgFilePath = "$title/$name.jpg"
@@ -194,7 +201,16 @@ class SessionRecordFragment : Fragment() {
 
                     val imageView = ImageView(context)
                     imageView.setImageURI(imageFile.toUri())
-                    binding.photosCarousel.addView(imageView)
+                    imageView.layoutParams =
+                        ViewGroup.LayoutParams(
+                            binding.photosCarousel.height,
+                            binding.photosCarousel.height
+                        )
+                    binding.previewImages.addView(imageView)
+
+                    binding.horizontalScrollView.postDelayed(Runnable {
+                        binding.horizontalScrollView.fullScroll(HorizontalScrollView.FOCUS_RIGHT)
+                    }, 100L)
 
                     if (index == 0) {
                         val imageSource = BitmapFactory.decodeFile(imagePath(imgFilePath))
